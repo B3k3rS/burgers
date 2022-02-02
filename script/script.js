@@ -4,10 +4,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeModal = document.querySelector('#closeModal');
     const questionsTitle = document.querySelector('#question');
     const formAnswers = document.querySelector('#formAnswers');
-    const nextBtn = document.querySelector('#next')
-    const prevBtn = document.querySelector('#prev')
-
-    let numberQuestion = 0;
+    const nextBtn = document.querySelector('#next');
+    const prevBtn = document.querySelector('#prev');
+    const sendBtn = document.querySelector('#send');
 
     const questions = [
         {
@@ -84,6 +83,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     ];
 
+    const finalAnswers = [];
+
     btnOpenModal.addEventListener('click', () => {
         modalBlock.classList.add('d-block')
         playTest();
@@ -95,14 +96,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const playTest = () => {
         
+        
+        let numberQuestion = 0;
+
         const renderAnswers = (index) => {
-            console.log(index)
             questions[index].answers.forEach((answer) => {
                 const answerItem = document.createElement('div');
 
                 answerItem.classList.add('answers-item', 'd-flex', 'flex-column');
                 answerItem.innerHTML = `
-                    <input type="${questions[index].type}" id="${answer.title}" name="answer" class="d-none">
+                    <input type="${questions[index].type}" id="${answer.title}" name="answer" class="d-none" value="${answer.title}">
                     <label for="${answer.title}" class="d-flex flex-column justify-content-between">
                     <img class="answerImg" src="${answer.url}" alt="burger">
                     <span>${answer.title}</span>
@@ -116,13 +119,59 @@ document.addEventListener('DOMContentLoaded', () => {
         const renderQuestions = (indexQuestion) => {
             formAnswers.innerHTML = '';
             
-            questionsTitle.textContent = `${questions[indexQuestion].question}`;
+            if (numberQuestion>=0 && numberQuestion <= questions.length -1 ) {
+                questionsTitle.textContent = `${questions[indexQuestion].question}`;
+                renderAnswers(indexQuestion);
+                nextBtn.classList.remove('d-none');
+                prevBtn.classList.remove('d-none');
+                sendBtn.classList.add('d-none');
+            } 
+            
+            if (numberQuestion == 0) {
+                prevBtn.classList.add('d-none');
+            }
 
-            renderAnswers(indexQuestion);
+            if (numberQuestion == questions.length) {
+                nextBtn.classList.add('d-none');
+                prevBtn.classList.add('d-none');
+                sendBtn.classList.remove('d-none');
+                formAnswers.innerHTML = `
+                    <div class="form-group">
+                        <label for="numberPhone">Enter your number</label>
+                        <input type="phone" class="form-control" id="numberPhone">
+                    </div>
+                `;
+            }
+
+            if (numberQuestion == questions.length + 1) {
+                formAnswers.textContent = `Спасибо за пройденный тест!`
+
+                setTimeout(() => {
+                    modalBlock.classList.remove('d-block')
+                }, 2000);
+            }
         }
         renderQuestions(numberQuestion);
 
+        const checkAnswer = () => {
+            const obj = {};
+
+            const inputs = [...formAnswers.elements]
+                .filter(elem => elem.checked || elem.id == 'numberPhone')
+
+            inputs.forEach((elem, index) => {
+                if (numberQuestion >= 0 && numberQuestion <= questions.length - 1) {
+                    obj[`${index}_${questions[numberQuestion].question}`] = elem.value;
+                }
+                if (numberQuestion == questions.length) {
+                    obj[`Номер телефона`] = elem.value;
+                }
+            })
+            finalAnswers.push(obj)
+        }
+
         nextBtn.onclick = () => {
+            checkAnswer();
             numberQuestion++;
             renderQuestions(numberQuestion);
         }
@@ -131,7 +180,13 @@ document.addEventListener('DOMContentLoaded', () => {
             numberQuestion--;
             renderQuestions(numberQuestion);
         }
-    
+        
+        sendBtn.onclick = () => {
+            checkAnswer();
+            numberQuestion++;
+            renderQuestions(numberQuestion);
+            console.log(finalAnswers);
+        }
     }    
 })
 
